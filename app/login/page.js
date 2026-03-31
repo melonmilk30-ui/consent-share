@@ -8,6 +8,7 @@ export default function LoginPage() {
       provider: "kakao",
       options: {
         redirectTo: `${window.location.origin}/`,
+        scopes: "profile_nickname",
       },
     });
     if (error) alert("로그인에 실패했습니다. 다시 시도해주세요.");
