@@ -1,7 +1,8 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
+  const supabase = createClient();
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") || "";
   const category = searchParams.get("category") || "전체";
@@ -10,7 +11,7 @@ export async function GET(request) {
   let q = supabase.from("services").select("*");
 
   if (query) {
-    q = q.ilike("name", `%${query}%`);
+    q = q.or(`name.ilike.%${query}%,name_en.ilike.%${query}%`);
   }
   if (category && category !== "전체") {
     q = q.eq("category", category);
