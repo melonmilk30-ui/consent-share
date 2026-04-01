@@ -784,23 +784,40 @@ export default function HomePage() {
                 <div style={{ fontSize: 15, fontWeight: 600, color: "#334155", marginBottom: 16 }}>{analyzeResult.analysis.name}</div>
               </div>
 
-              <div style={{ padding: "16px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", marginBottom: 20 }}>
+              <div style={{ padding: "16px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", marginBottom: 12 }}>
                 <div style={{ fontSize: 13, color: "#166534", lineHeight: 1.7 }}>
                   {analyzeResult.analysis.reason}
                 </div>
               </div>
 
-              <div style={{ padding: "12px 14px", borderRadius: 8, background: "#f8fafc", marginBottom: 20 }}>
+              <div style={{ padding: "12px 14px", borderRadius: 8, background: "#f8fafc", marginBottom: 12 }}>
                 <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.7 }}>
                   💡 교사만 사용하고 학생 개인정보를 입력하지 않는 서비스는 개인정보 수집·이용 동의서를 작성할 필요가 없습니다.
                 </div>
               </div>
 
-              <button onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{
-                width: "100%", padding: 13, borderRadius: 10, border: "none",
-                background: "#f1f5f9", color: "#475569", fontSize: 15, fontWeight: 700,
-                cursor: "pointer", fontFamily: "inherit",
-              }}>확인</button>
+              <div style={{ padding: "12px 14px", borderRadius: 8, background: "#fffbeb", border: "1px solid #fde68a", marginBottom: 20 }}>
+                <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7 }}>
+                  ⚠️ 약관에는 명시되어 있지 않지만, 실제 사용 시 학생 이름·번호 등을 입력하는 경우에는 동의서가 필요합니다. 이 경우 아래 버튼을 눌러 직접 등록해주세요.
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)",
+                  background: "#fff", color: "#475569", fontSize: 14, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>닫기</button>
+                <button onClick={() => {
+                  setEditName(analyzeResult.analysis.name || "");
+                  setEditCategory(analyzeResult.analysis.category || "기타");
+                  setRegisterStep("confirm");
+                }} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "none",
+                  background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff",
+                  fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                }}>그래도 등록하기</button>
+              </div>
             </>)}
 
             {/* Step 2: 분석 결과 확인 + 서비스명 수정 */}
