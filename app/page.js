@@ -321,75 +321,54 @@ export default function HomePage() {
 
   return (
     <div style={{ minHeight: "100vh" }}>
-      {/* 생글생글 띠 배너 */}
-      {showBanner && (
-        <div style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7, #ec4899)", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, position: "relative" }}>
-          <button onClick={() => setShowSgsg(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, color: "#fff", padding: 0 }}>
-            <span style={{ fontSize: 14 }}>✨</span>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>생글생글</span>
-            <span style={{ fontSize: 12, opacity: 0.9 }}>생기부 작성 도우미도 곧 오픈!</span>
-            <span style={{ fontSize: 12, opacity: 0.7 }}>→</span>
-          </button>
-          <button onClick={() => setShowBanner(false)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: 4, display: "flex" }}>
-            <Icon name="x" />
-          </button>
-        </div>
-      )}
-
-      {/* Header */}
-      <header style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-            <img src="https://k.kakaocdn.net/dn/JnX0S/dJMcagLLNkH/Iy54jWQUY9nGep2gsP7Fek/img_xl.jpg" alt="생글생글" style={{ width: 32, height: 32, borderRadius: 8 }} />
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2 }}>생글생글</div>
-              <div style={{ fontSize: 11, color: "#64748b" }}>{isAdmin ? `가입자 ${totalUsers}명 · ` : ""}에듀테크 개인정보 동의서</div>
-            </div>
+      {/* 통합 헤더 (1줄) */}
+      <header style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: 960, margin: "0 auto", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} src="https://k.kakaocdn.net/dn/JnX0S/dJMcagLLNkH/Iy54jWQUY9nGep2gsP7Fek/img_xl.jpg" alt="생글생글" style={{ width: 28, height: 28, borderRadius: 7, cursor: "pointer" }} />
+            {isAdmin && <span style={{ fontSize: 11, color: "#94a3b8" }}>{totalUsers}명</span>}
+            <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.08)", margin: "0 4px" }} />
+            {[
+              { emoji: "🖊️", name: "생글생글", desc: "생기부 도우미", action: () => setShowSgsg(true), active: false },
+              { emoji: "🤝", name: "동글동글", desc: "동의서 공유 플랫폼", url: "https://consent.saenggle.com", active: true },
+              { emoji: "📄", name: "뚝딱공문", desc: "공문 본문 자동 작성", url: "https://gongmoon.saenggle.com", active: false },
+            ].map((s, i) => (
+              s.action ? (
+                <button key={i} onClick={s.action} style={{
+                  display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6,
+                  background: s.active ? "#eef2ff" : "transparent",
+                  border: s.active ? "1px solid #c7d2fe" : "1px solid transparent",
+                  cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit",
+                }}>
+                  <span style={{ fontSize: 13 }}>{s.emoji}</span>
+                  <span style={{ fontSize: 12, fontWeight: s.active ? 700 : 500, color: s.active ? "#4f46e5" : "#64748b" }}>{s.name}</span>
+                  <span style={{ fontSize: 10, color: "#94a3b8" }}>{s.desc}</span>
+                </button>
+              ) : (
+                <a key={i} href={s.url} style={{
+                  display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6,
+                  background: s.active ? "#eef2ff" : "transparent",
+                  border: s.active ? "1px solid #c7d2fe" : "1px solid transparent",
+                  textDecoration: "none", whiteSpace: "nowrap",
+                }}>
+                  <span style={{ fontSize: 13 }}>{s.emoji}</span>
+                  <span style={{ fontSize: 12, fontWeight: s.active ? 700 : 500, color: s.active ? "#4f46e5" : "#64748b" }}>{s.name}</span>
+                  <span style={{ fontSize: 10, color: "#94a3b8" }}>{s.desc}</span>
+                </a>
+              )
+            ))}
           </div>
           {user ? (
-            <button onClick={handleLogout} title="로그아웃" style={{ padding: 8, borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#94a3b8", cursor: "pointer", display: "flex" }}>
+            <button onClick={handleLogout} title="로그아웃" style={{ padding: 6, borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#94a3b8", cursor: "pointer", display: "flex" }}>
               <Icon name="logout" />
             </button>
           ) : (
-            <button onClick={() => router.push("/login")} style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            <button onClick={() => router.push("/login")} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
               로그인
             </button>
           )}
         </div>
       </header>
-
-      {/* 서비스 네비게이션 */}
-      <div style={{ background: "#f8fafc", borderBottom: "1px solid rgba(0,0,0,0.04)", overflowX: "auto" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "6px 20px", display: "flex", gap: 12, justifyContent: "center" }}>
-          {[
-            { emoji: "🖊️", name: "생글생글", desc: "생기부 AI 작성", url: null, action: () => setShowSgsg(true), active: false },
-            { emoji: "🤝", name: "동글동글", desc: "동의서 공유", url: "https://consent.saenggle.com", active: true },
-            { emoji: "📄", name: "뚝딱공문", desc: "공문 작성", url: "https://gongmoon.saenggle.com", active: false },
-          ].map((s, i) => (
-            s.action ? (
-              <button key={i} onClick={s.action} style={{
-                display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8,
-                background: s.active ? "#eef2ff" : "transparent",
-                border: s.active ? "1px solid #c7d2fe" : "1px solid transparent",
-                cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit",
-              }}>
-                <span style={{ fontSize: 14 }}>{s.emoji}</span>
-                <span style={{ fontSize: 12, fontWeight: s.active ? 700 : 500, color: s.active ? "#4f46e5" : "#64748b" }}>{s.name}</span>
-              </button>
-            ) : (
-              <a key={i} href={s.url} style={{
-                display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8,
-                background: s.active ? "#eef2ff" : "transparent",
-                border: s.active ? "1px solid #c7d2fe" : "1px solid transparent",
-                textDecoration: "none", whiteSpace: "nowrap", transition: "all 0.15s",
-              }}>
-                <span style={{ fontSize: 14 }}>{s.emoji}</span>
-                <span style={{ fontSize: 12, fontWeight: s.active ? 700 : 500, color: s.active ? "#4f46e5" : "#64748b" }}>{s.name}</span>
-              </a>
-            )
-          ))}
-        </div>
-      </div>
 
       {/* Hero + Search */}
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 20px 0", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(12px)", transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }}>
