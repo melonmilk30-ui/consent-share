@@ -329,7 +329,7 @@ export default function HomePage() {
             {isAdmin && <span style={{ fontSize: 11, color: "#94a3b8" }}>{totalUsers}명</span>}
             <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.08)", margin: "0 4px" }} />
             {[
-              { emoji: "🖊️", name: "생글생글", desc: "생기부 도우미", action: () => setShowSgsg(true), active: false },
+              { emoji: "🖊️", name: "생글생글", desc: "생기부 도우미", url: "/saenggle", active: false },
               { emoji: "🤝", name: "동글동글", desc: "동의서 공유 플랫폼", url: "https://consent.saenggle.com", active: true },
               { emoji: "📄", name: "뚝딱공문", desc: "공문 본문 자동 작성", url: "https://gongmoon.saenggle.com", active: false },
             ].map((s, i) => (
