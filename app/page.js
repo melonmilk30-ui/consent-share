@@ -55,39 +55,44 @@ export default function HomePage() {
   const [registering, setRegistering] = useState(false);
   const [registerAgreed, setRegisterAgreed] = useState(false);
   const [registerShareAgreed, setRegisterShareAgreed] = useState(false);
+  const [analyzeResult, setAnalyzeResult] = useState(null); // AI 분석 결과
+  const [editName, setEditName] = useState(""); // 수정 가능한 서비스명
+  const [registerStep, setRegisterStep] = useState("q1"); // "q1" | "q2" | "input" | "confirm" | "not_needed" | "need_review"
+  const [totalUsers, setTotalUsers] = useState(0); // 관리자용 가입자 수
   const inputRef = useRef(null);
 
-  // 로그인 상태 확인
+  // 로그인 상태 확인 (비로그인도 메인 페이지 접근 가능)
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push("/login"); return; }
-      setUser(session.user);
-
-      // 관리자 여부 확인
-      try {
-        const res = await fetch("/api/check-user");
-        const data = await res.json();
-        setIsAdmin(data.is_admin || false);
-      } catch {}
-
+      if (session) {
+        setUser(session.user);
+        // 관리자 여부 확인
+        try {
+          const res = await fetch("/api/check-user");
+          const data = await res.json();
+          setIsAdmin(data.is_admin || false);
+          if (data.is_admin) {
+            setTotalUsers(data.total_users || 0);
+          }
+        } catch {}
+      }
       setLoading(false);
       setMounted(true);
     };
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.push("/login");
-      else setUser(session.user);
+      if (session) setUser(session.user);
+      else { setUser(null); setIsAdmin(false); }
     });
     return () => subscription.unsubscribe();
   }, [router]);
 
-  // 서비스 목록 불러오기
+  // 서비스 목록 불러오기 (비로그인도 가능)
   useEffect(() => {
-    if (!user) return;
     fetchServices();
-  }, [user, query, category, sortBy]);
+  }, [query, category, sortBy]);
 
   const fetchServices = async () => {
     const params = new URLSearchParams();
@@ -119,16 +124,73 @@ export default function HomePage() {
     return new Date() > sixMonths;
   };
 
-  const handleSingleDownload = (service) => {
-    showToast(`${service.name} 동의서 다운로드 시작!`);
-    // TODO: 실제 hwpx 다운로드 API 연결
+  // 로그인 필요한 작업 시 체크
+  const requireLogin = () => {
+    if (!user) {
+      showToast("로그인이 필요합니다!");
+      setTimeout(() => router.push("/login"), 800);
+      return true;
+    }
+    return false;
   };
 
-  const handleMergeDownload = () => {
+  const handleSingleDownload = async (service) => {
+    if (requireLogin()) return;
+    showToast(`${service.name} 동의서 생성 중...`);
+    try {
+      const res = await fetch(`/api/download?id=${service.id}`);
+      if (!res.ok) {
+        const err = await res.json();
+        showToast(err.error || "다운로드 실패");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${service.name}_개인정보수집이용동의서.hwpx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`${service.name} 동의서 다운로드 완료!`);
+      fetchServices(); // 다운로드 수 갱신
+    } catch {
+      showToast("다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleMergeDownload = async () => {
+    if (requireLogin()) return;
+    const selectedIds = Array.from(selected);
     const names = services.filter(s => selected.has(s.id)).map(s => s.name).join(", ");
-    showToast(`합본 다운로드: ${names}`);
-    setSelected(new Set());
-    // TODO: 실제 합본 hwpx 다운로드 API 연결
+    showToast(`합본 동의서 생성 중... (${selectedIds.length}건)`);
+    try {
+      const res = await fetch("/api/download-merge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        showToast(err.error || "합본 다운로드 실패");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `동의서합본_${selectedIds.length}건.hwpx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`합본 다운로드 완료! (${names})`);
+      setSelected(new Set());
+      fetchServices(); // 다운로드 수 갱신
+    } catch {
+      showToast("합본 다운로드 중 오류가 발생했습니다.");
+    }
   };
 
   const handleAdminDelete = async (service) => {
@@ -150,11 +212,13 @@ export default function HomePage() {
     } catch { showToast("오류가 발생했습니다."); }
   };
 
-  const handleRegister = async () => {
+  // 1단계: AI 분석 요청
+  const handleAnalyze = async () => {
+    if (requireLogin()) return;
     if (!termsText && !termsUrl) { showToast("이용약관 텍스트 또는 URL을 입력해주세요!"); return; }
     setRegistering(true);
     try {
-      const res = await fetch("/api/register", {
+      const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,17 +227,55 @@ export default function HomePage() {
         }),
       });
       const result = await res.json();
+      if (result.needLogin) { router.push("/login"); return; }
+      if (res.ok) {
+        setAnalyzeResult(result);
+        // 동의서 필요 없는 경우
+        if (result.analysis.consent_needed === false) {
+          setRegisterStep("not_needed");
+        } else {
+          setEditName(result.analysis.name || "");
+          setRegisterStep("confirm");
+        }
+      } else {
+        showToast(result.error || "분석에 실패했습니다.");
+      }
+    } catch { showToast("서버 오류가 발생했습니다."); }
+    setRegistering(false);
+  };
+
+  // 2단계: 확인 후 DB 등록
+  const handleConfirmRegister = async () => {
+    if (!analyzeResult) return;
+    setRegistering(true);
+    try {
+      // 사용자가 수정한 서비스명 반영
+      const finalAnalysis = { ...analyzeResult.analysis, name: editName };
+      const res = await fetch("/api/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysis: finalAnalysis,
+          raw_terms: analyzeResult.raw_terms,
+        }),
+      });
+      const result = await res.json();
       if (res.ok) {
         showToast("동의서 등록이 완료되었습니다!");
         setShowRegister(false);
-        setTermsText(""); setTermsUrl("");
-        setRegisterAgreed(false); setRegisterShareAgreed(false);
+        resetRegisterForm();
         fetchServices();
       } else {
         showToast(result.error || "등록에 실패했습니다.");
       }
     } catch { showToast("서버 오류가 발생했습니다."); }
     setRegistering(false);
+  };
+
+  const resetRegisterForm = () => {
+    setTermsText(""); setTermsUrl("");
+    setRegisterAgreed(false); setRegisterShareAgreed(false);
+    setAnalyzeResult(null); setEditName(""); setRegisterStep("q1");
   };
 
   if (loading) {
@@ -208,12 +310,18 @@ export default function HomePage() {
             <img src="https://k.kakaocdn.net/dn/JnX0S/dJMcagLLNkH/Iy54jWQUY9nGep2gsP7Fek/img_xl.jpg" alt="생글생글" style={{ width: 32, height: 32, borderRadius: 8 }} />
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2 }}>생글생글</div>
-              <div style={{ fontSize: 11, color: "#64748b" }}>에듀테크 개인정보 동의서</div>
+              <div style={{ fontSize: 11, color: "#64748b" }}>{isAdmin ? `가입자 ${totalUsers}명 · ` : ""}에듀테크 개인정보 동의서</div>
             </div>
           </div>
-          <button onClick={handleLogout} title="로그아웃" style={{ padding: 8, borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#94a3b8", cursor: "pointer", display: "flex" }}>
-            <Icon name="logout" />
-          </button>
+          {user ? (
+            <button onClick={handleLogout} title="로그아웃" style={{ padding: 8, borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#94a3b8", cursor: "pointer", display: "flex" }}>
+              <Icon name="logout" />
+            </button>
+          ) : (
+            <button onClick={() => router.push("/login")} style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+              로그인
+            </button>
+          )}
         </div>
       </header>
 
@@ -229,14 +337,13 @@ export default function HomePage() {
         {/* 3단계 안내 */}
         <div style={{ display: "flex", gap: 8, marginBottom: 20, overflowX: "auto", paddingBottom: 2 }}>
           {[
-            { emoji: "🔍", title: "검색", desc: "서비스명으로 찾기" },
-            { emoji: "📄", title: "다운로드", desc: "hwpx 바로 받기" },
-            { emoji: "✨", title: "없으면 등록", desc: "약관 붙여넣기만!" },
+            { emoji: "🔍", title: "서비스명으로 찾고" },
+            { emoji: "📄", title: "hwpx 바로 받고" },
+            { emoji: "✨", title: "없으면 약관 붙여넣기만!" },
           ].map((step, i) => (
             <div key={i} style={{ flex: 1, minWidth: 100, padding: "12px 14px", borderRadius: 10, background: "#fff", border: "1px solid rgba(0,0,0,0.05)", textAlign: "center" }}>
               <div style={{ fontSize: 20, marginBottom: 4 }}>{step.emoji}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 2 }}>{step.title}</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>{step.desc}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>{step.title}</div>
             </div>
           ))}
         </div>
@@ -319,9 +426,14 @@ export default function HomePage() {
                     <TagBadge text={service.category} />
                     {expired && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: "#fef2f2", color: "#dc2626" }}>⏰ 6개월 경과</span>}
                   </div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{service.cases}</div>
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{service.case_type ? ({
+                    foreign_no_signup: "국외기업 · 보호자동의 불필요",
+                    foreign_with_signup: "국외기업 · 보호자동의 필요",
+                    domestic_no_signup: "국내기업 · 보호자동의 불필요",
+                    domestic_with_signup: "국내기업 · 보호자동의 필요",
+                  }[service.case_type] || service.case_type) : service.cases}</div>
                   <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>
-                    {new Date(service.created_at).toLocaleDateString("ko-KR")} 등록 · 다운로드 {service.downloads}회
+                    {new Date(service.created_at).toLocaleDateString("ko-KR")} 등록{isAdmin ? ` · 다운로드 ${service.downloads}회` : ""}
                   </div>
                 </div>
 
@@ -411,7 +523,7 @@ export default function HomePage() {
               { label: "이용 목적", value: showDetail.purpose },
               { label: "보유 기간", value: showDetail.retention },
               { label: "등록일", value: new Date(showDetail.created_at).toLocaleDateString("ko-KR") },
-              { label: "다운로드", value: `${showDetail.downloads}회` },
+              { label: "다운로드", value: isAdmin ? `${showDetail.downloads}회` : null },
             ].map(({ label, value }) => value && (
               <div key={label} style={{ display: "flex", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
                 <span style={{ width: 80, fontSize: 13, color: "#94a3b8", fontWeight: 500, flexShrink: 0 }}>{label}</span>
@@ -432,67 +544,257 @@ export default function HomePage() {
 
       {/* Register Modal */}
       {showRegister && (
-        <div onClick={() => setShowRegister(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+        <div onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <div onClick={e => e.stopPropagation()} className="modal-sheet" style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "24px 20px", maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 -10px 40px rgba(0,0,0,0.12)", animation: "sheetUp 0.3s ease-out" }}>
             <div style={{ width: 40, height: 4, borderRadius: 2, background: "#d1d5db", margin: "0 auto 16px" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 750, margin: 0 }}>개인정보 동의서 자동 제작</h2>
-              <button onClick={() => setShowRegister(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b" }}>
+              <h2 style={{ fontSize: 20, fontWeight: 750, margin: 0 }}>
+                {(registerStep === "q1" || registerStep === "q2") && "동의서 작성 전 확인"}
+                {registerStep === "input" && "개인정보 동의서 자동 제작"}
+                {registerStep === "confirm" && "분석 결과 확인"}
+                {registerStep === "not_needed" && "확인 완료"}
+                {registerStep === "need_review" && "확인 완료"}
+              </h2>
+              <button onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b" }}>
                 <Icon name="x" />
               </button>
             </div>
 
-            <div style={{ padding: "10px 14px", borderRadius: 8, background: "#f0f9ff", border: "1px solid #bae6fd", marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: "#0369a1", lineHeight: 1.6 }}>
-                💡 서비스명, 카테고리, 수집 항목 등은 <strong>AI가 약관에서 자동으로 추출</strong>합니다. 약관만 붙여넣으면 돼요!
+            {/* Q1: 개인정보 수집 여부 */}
+            {registerStep === "q1" && (<>
+              <div style={{ textAlign: "center", padding: "8px 0 20px" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#334155", lineHeight: 1.6, marginBottom: 16 }}>
+                  이 에듀테크 서비스를 사용할 때,<br />학생의 개인정보를 입력하는 경우가 있나요?
+                </div>
               </div>
-            </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>입력 방식</label>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[["url", "이용약관 페이지 URL"], ["text", "약관 텍스트 붙여넣기"]].map(([mode, label]) => (
-                  <button key={mode} onClick={() => setInputMode(mode)} style={{
-                    padding: "6px 14px", borderRadius: 20, border: "1px solid",
-                    borderColor: inputMode === mode ? "#6366f1" : "rgba(0,0,0,0.08)",
-                    background: inputMode === mode ? "#6366f1" : "#fff",
-                    color: inputMode === mode ? "#fff" : "#475569",
-                    fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
-                  }}>{label}</button>
-                ))}
+              <div style={{ padding: "14px 16px", borderRadius: 10, background: "#f8fafc", border: "1px solid rgba(0,0,0,0.06)", marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 8 }}>누가 입력하든 상관없이, 학생의 개인정보가 서비스에 들어가면 해당됩니다.</div>
+                <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.8 }}>
+                  • 교사가 학생 이름·번호를 서비스에 등록하는 경우<br />
+                  • 교사가 학생 계정을 대신 만들어주는 경우<br />
+                  • 학생이 직접 회원가입하는 경우<br />
+                  • 학부모가 자녀 정보를 입력하는 경우
+                </div>
               </div>
-            </div>
 
-            {inputMode === "text" ? (
-              <div style={{ marginBottom: 20 }}>
-                <textarea value={termsText} onChange={e => setTermsText(e.target.value)} placeholder="서비스의 이용약관이나 개인정보처리방침 전문을 붙여넣어 주세요..." style={{ width: "100%", minHeight: 160, padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 13, lineHeight: 1.7, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => { setShowRegister(false); resetRegisterForm(); showToast("개인정보를 수집하지 않는 서비스는 동의서가 필요하지 않습니다."); }} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)",
+                  background: "#fff", color: "#475569", fontSize: 14, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>아니요, 해당 없어요</button>
+                <button onClick={() => setRegisterStep("q2")} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "none",
+                  background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff",
+                  fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                }}>예, 해당됩니다</button>
               </div>
-            ) : (
-              <div style={{ marginBottom: 20 }}>
-                <input value={termsUrl} onChange={e => setTermsUrl(e.target.value)} placeholder="https://example.com/terms" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>이용약관 또는 개인정보처리방침 페이지의 URL을 입력해 주세요.</p>
+            </>)}
+
+            {/* Q2: 운영위원회 심의 */}
+            {registerStep === "q2" && (<>
+              <div style={{ textAlign: "center", padding: "8px 0 20px" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#334155", lineHeight: 1.6, marginBottom: 16 }}>
+                  이 에듀테크는 학교 운영위원회 심의를<br />통과한 학습지원 소프트웨어인가요?
+                </div>
               </div>
-            )}
 
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", marginBottom: 8, padding: "0 2px" }}>
-              <input type="checkbox" checked={registerAgreed} onChange={e => setRegisterAgreed(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#6366f1", cursor: "pointer", flexShrink: 0, marginTop: 2 }} />
-              <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>AI가 분석한 결과는 참고용이며, 등록 전 내용을 반드시 확인합니다. 분석 결과에 대한 책임은 등록자에게 있음에 동의합니다.</span>
-            </label>
+              <div style={{ padding: "14px 16px", borderRadius: 10, background: "#f8fafc", border: "1px solid rgba(0,0,0,0.06)", marginBottom: 20 }}>
+                <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.7 }}>
+                  학습지원 소프트웨어는 운영위원회 심의를 통과한 경우에만 개인정보 수집·이용 동의서를 내보낼 수 있습니다.
+                </div>
+              </div>
 
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", marginBottom: 16, padding: "0 2px" }}>
-              <input type="checkbox" checked={registerShareAgreed} onChange={e => setRegisterShareAgreed(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#6366f1", cursor: "pointer", flexShrink: 0, marginTop: 2 }} />
-              <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>분석 결과를 바탕으로 생성된 hwpx 파일은 본 플랫폼에 공유되며, 다른 이용자가 다운로드할 수 있음을 인지합니다.</span>
-            </label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setRegisterStep("need_review")} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)",
+                  background: "#fff", color: "#475569", fontSize: 14, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>아직 심의 전이에요</button>
+                <button onClick={() => setRegisterStep("input")} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "none",
+                  background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff",
+                  fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                }}>예, 통과했습니다</button>
+              </div>
+            </>)}
 
-            <button onClick={handleRegister} disabled={registering || !(registerAgreed && registerShareAgreed)} style={{
-              width: "100%", padding: 13, borderRadius: 10, border: "none",
-              background: (registerAgreed && registerShareAgreed && !registering) ? "linear-gradient(135deg, #3b82f6, #6366f1)" : "#e2e8f0",
-              color: (registerAgreed && registerShareAgreed && !registering) ? "#fff" : "#94a3b8",
-              fontSize: 15, fontWeight: 700, cursor: (registerAgreed && registerShareAgreed && !registering) ? "pointer" : "not-allowed",
-              fontFamily: "inherit", transition: "all 0.2s",
-            }}>
-              {registering ? "분석 중..." : "AI 분석 후 등록하기"}
-            </button>
+            {/* 운영위 심의 필요 안내 */}
+            {registerStep === "need_review" && (<>
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#d97706", marginBottom: 16 }}>운영위원회 심의를 먼저 받아주세요</div>
+              </div>
+
+              <div style={{ padding: "16px", borderRadius: 10, background: "#fffbeb", border: "1px solid #fde68a", marginBottom: 20 }}>
+                <div style={{ fontSize: 13, color: "#92400e", lineHeight: 1.7 }}>
+                  학습지원 소프트웨어를 학교에서 사용하려면 운영위원회 심의를 먼저 통과해야 합니다. 심의 통과 후 다시 방문해주세요.
+                </div>
+              </div>
+
+              <button onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{
+                width: "100%", padding: 13, borderRadius: 10, border: "none",
+                background: "#f1f5f9", color: "#475569", fontSize: 15, fontWeight: 700,
+                cursor: "pointer", fontFamily: "inherit",
+              }}>확인</button>
+            </>)}
+
+            {/* Step: 약관 입력 */}
+            {registerStep === "input" && (<>
+              <div style={{ padding: "10px 14px", borderRadius: 8, background: "#f0f9ff", border: "1px solid #bae6fd", marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: "#0369a1", lineHeight: 1.6 }}>
+                  💡 AI가 약관을 분석하여 <strong>동의서 필요 여부를 판별</strong>하고, 필요한 정보를 자동으로 추출합니다.
+                </div>
+              </div>
+
+              <div style={{ padding: "10px 14px", borderRadius: 8, background: "#fefce8", border: "1px solid #fde68a", marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.6 }}>
+                  📌 <strong>동의서가 필요한 경우</strong>: 학생 개인정보(이름, 번호 등)를 서비스에 등록하거나, 학생 계정을 생성하는 경우<br />
+                  📌 <strong>동의서가 필요 없는 경우</strong>: 교사만 사용하고 학생 정보를 입력하지 않는 경우 (예: 구글어스, 유튜브)
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>입력 방식</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[["url", "이용약관 페이지 URL"], ["text", "약관 텍스트 붙여넣기"]].map(([mode, label]) => (
+                    <button key={mode} onClick={() => setInputMode(mode)} style={{
+                      padding: "6px 14px", borderRadius: 20, border: "1px solid",
+                      borderColor: inputMode === mode ? "#6366f1" : "rgba(0,0,0,0.08)",
+                      background: inputMode === mode ? "#6366f1" : "#fff",
+                      color: inputMode === mode ? "#fff" : "#475569",
+                      fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
+                    }}>{label}</button>
+                  ))}
+                </div>
+              </div>
+
+              {inputMode === "text" ? (
+                <div style={{ marginBottom: 20 }}>
+                  <textarea value={termsText} onChange={e => setTermsText(e.target.value)} placeholder="서비스의 이용약관이나 개인정보처리방침 전문을 붙여넣어 주세요..." style={{ width: "100%", minHeight: 160, padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 13, lineHeight: 1.7, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+                </div>
+              ) : (
+                <div style={{ marginBottom: 20 }}>
+                  <input value={termsUrl} onChange={e => setTermsUrl(e.target.value)} placeholder="https://example.com/terms" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                  <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>이용약관 또는 개인정보처리방침 페이지의 URL을 입력해 주세요.</p>
+                </div>
+              )}
+
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", marginBottom: 8, padding: "0 2px" }}>
+                <input type="checkbox" checked={registerAgreed} onChange={e => setRegisterAgreed(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#6366f1", cursor: "pointer", flexShrink: 0, marginTop: 2 }} />
+                <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>AI가 분석한 결과는 참고용이며, 등록 전 내용을 반드시 확인합니다. 분석 결과에 대한 책임은 등록자에게 있음에 동의합니다.</span>
+              </label>
+
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", marginBottom: 16, padding: "0 2px" }}>
+                <input type="checkbox" checked={registerShareAgreed} onChange={e => setRegisterShareAgreed(e.target.checked)} style={{ width: 16, height: 16, accentColor: "#6366f1", cursor: "pointer", flexShrink: 0, marginTop: 2 }} />
+                <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>분석 결과를 바탕으로 생성된 hwpx 파일은 본 플랫폼에 공유되며, 다른 이용자가 다운로드할 수 있음을 인지합니다.</span>
+              </label>
+
+              <button onClick={handleAnalyze} disabled={registering || !(registerAgreed && registerShareAgreed)} style={{
+                width: "100%", padding: 13, borderRadius: 10, border: "none",
+                background: (registerAgreed && registerShareAgreed && !registering) ? "linear-gradient(135deg, #3b82f6, #6366f1)" : "#e2e8f0",
+                color: (registerAgreed && registerShareAgreed && !registering) ? "#fff" : "#94a3b8",
+                fontSize: 15, fontWeight: 700, cursor: (registerAgreed && registerShareAgreed && !registering) ? "pointer" : "not-allowed",
+                fontFamily: "inherit", transition: "all 0.2s",
+              }}>
+                {registering ? "AI 분석 중... (최대 30초)" : "AI 분석 시작"}
+              </button>
+            </>)}
+
+            {/* Step: 동의서 불필요 */}
+            {registerStep === "not_needed" && analyzeResult && (<>
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#059669", marginBottom: 8 }}>동의서가 필요하지 않습니다</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "#334155", marginBottom: 16 }}>{analyzeResult.analysis.name}</div>
+              </div>
+
+              <div style={{ padding: "16px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0", marginBottom: 20 }}>
+                <div style={{ fontSize: 13, color: "#166534", lineHeight: 1.7 }}>
+                  {analyzeResult.analysis.reason}
+                </div>
+              </div>
+
+              <div style={{ padding: "12px 14px", borderRadius: 8, background: "#f8fafc", marginBottom: 20 }}>
+                <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.7 }}>
+                  💡 교사만 사용하고 학생 개인정보를 입력하지 않는 서비스는 개인정보 수집·이용 동의서를 작성할 필요가 없습니다.
+                </div>
+              </div>
+
+              <button onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{
+                width: "100%", padding: 13, borderRadius: 10, border: "none",
+                background: "#f1f5f9", color: "#475569", fontSize: 15, fontWeight: 700,
+                cursor: "pointer", fontFamily: "inherit",
+              }}>확인</button>
+            </>)}
+
+            {/* Step 2: 분석 결과 확인 + 서비스명 수정 */}
+            {registerStep === "confirm" && analyzeResult && (<>
+              <div style={{ padding: "10px 14px", borderRadius: 8, background: "#f0fdf4", border: "1px solid #bbf7d0", marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: "#166534", lineHeight: 1.6 }}>
+                  ✅ AI 분석이 완료되었습니다. 아래 내용을 확인하고, 서비스명이 다르면 수정해주세요.
+                </div>
+              </div>
+
+              {/* 서비스명 수정 */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>
+                  서비스명 <span style={{ color: "#dc2626", fontSize: 11 }}>* 수정 가능</span>
+                </label>
+                <input value={editName} onChange={e => setEditName(e.target.value)} style={{
+                  width: "100%", padding: "10px 14px", borderRadius: 8, border: "2px solid #6366f1",
+                  fontSize: 15, fontWeight: 600, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+                  background: "#faf5ff",
+                }} />
+                <p style={{ fontSize: 11, color: "#8b5cf6", marginTop: 4 }}>
+                  ⚠️ 실제 웹사이트/앱에서 사용하는 이름으로 입력해주세요. 다른 선생님이 검색할 때 이 이름으로 찾습니다.
+                </p>
+              </div>
+
+              {/* 분석 결과 표시 */}
+              {[
+                { label: "카테고리", value: analyzeResult.analysis.category },
+                { label: "케이스", value: ({
+                  foreign_no_signup: "국외기업 · 보호자동의 불필요",
+                  foreign_with_signup: "국외기업 · 보호자동의 필요",
+                  domestic_no_signup: "국내기업 · 보호자동의 불필요",
+                  domestic_with_signup: "국내기업 · 보호자동의 필요",
+                }[analyzeResult.analysis.case_type] || analyzeResult.analysis.case_type) },
+                { label: "수집 항목", value: analyzeResult.analysis.items },
+                { label: "이용 목적", value: analyzeResult.analysis.purpose },
+                { label: "보유 기간", value: analyzeResult.analysis.retention },
+                ...(analyzeResult.analysis.overseas_transfer ? [
+                  { label: "이전 국가", value: analyzeResult.analysis.transfer_country },
+                  { label: "이전 방법", value: analyzeResult.analysis.transfer_method },
+                ] : []),
+              ].map(({ label, value }) => value && (
+                <div key={label} style={{ display: "flex", padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                  <span style={{ width: 80, fontSize: 12, color: "#94a3b8", fontWeight: 500, flexShrink: 0 }}>{label}</span>
+                  <span style={{ fontSize: 12, color: "#334155", fontWeight: 500, lineHeight: 1.5 }}>{value}</span>
+                </div>
+              ))}
+
+              <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+                <button onClick={() => { setRegisterStep("input"); setAnalyzeResult(null); }} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)",
+                  background: "#fff", color: "#475569", fontSize: 14, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>다시 분석</button>
+                <button onClick={handleConfirmRegister} disabled={registering || !editName.trim()} style={{
+                  flex: 2, padding: 13, borderRadius: 10, border: "none",
+                  background: (!registering && editName.trim()) ? "linear-gradient(135deg, #3b82f6, #6366f1)" : "#e2e8f0",
+                  color: (!registering && editName.trim()) ? "#fff" : "#94a3b8",
+                  fontSize: 15, fontWeight: 700,
+                  cursor: (!registering && editName.trim()) ? "pointer" : "not-allowed",
+                  fontFamily: "inherit", transition: "all 0.2s",
+                }}>
+                  {registering ? "등록 중..." : "이 내용으로 등록하기"}
+                </button>
+              </div>
+            </>)}
           </div>
         </div>
       )}

@@ -15,8 +15,19 @@ export async function GET(request) {
     .eq("kakao_id", user.id)
     .single();
 
+  const isAdmin = userData?.is_admin || false;
+
+  let total_users = 0;
+  if (isAdmin) {
+    const { count } = await supabase
+      .from("users")
+      .select("*", { count: "exact", head: true });
+    total_users = count || 0;
+  }
+
   return NextResponse.json({
     kakao_id: user.id,
-    is_admin: userData?.is_admin || false,
+    is_admin: isAdmin,
+    total_users,
   });
 }

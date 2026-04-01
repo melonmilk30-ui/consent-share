@@ -28,13 +28,17 @@ export async function middleware(request) {
   // 세션 갱신
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 로그인 안 된 상태에서 보호 페이지 접근 시 → 로그인으로
-  const protectedPaths = ["/", "/agree", "/services"];
-  const isProtected = protectedPaths.some(p =>
-    request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith("/api/")
-  );
+  // 로그인이 필요한 경로 (생성/다운로드/계정 관련 API만)
+  const protectedPaths = ["/agree"];
+  const protectedApis = ["/api/analyze", "/api/confirm", "/api/download", "/api/download-merge", "/api/delete-account", "/api/admin"];
+  
+  const isProtectedPage = protectedPaths.some(p => request.nextUrl.pathname === p);
+  const isProtectedApi = protectedApis.some(p => request.nextUrl.pathname.startsWith(p));
 
-  if (!user && isProtected && !request.nextUrl.pathname.startsWith("/api/search")) {
+  if (!user && (isProtectedPage || isProtectedApi)) {
+    if (isProtectedApi) {
+      return NextResponse.json({ error: "로그인이 필요합니다.", needLogin: true }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
