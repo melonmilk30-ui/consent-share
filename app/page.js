@@ -451,12 +451,6 @@ export default function HomePage() {
                     <TagBadge text={service.category} />
                     {expired && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: "#fef2f2", color: "#dc2626" }}>⏰ 6개월 경과</span>}
                   </div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{service.case_type ? ({
-                    foreign_no_signup: "국외기업 · 보호자동의 불필요",
-                    foreign_with_signup: "국외기업 · 보호자동의 필요",
-                    domestic_no_signup: "국내기업 · 보호자동의 불필요",
-                    domestic_with_signup: "국내기업 · 보호자동의 필요",
-                  }[service.case_type] || service.case_type) : service.cases}</div>
                   <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>
                     {new Date(service.created_at).toLocaleDateString("ko-KR")} 등록{isAdmin ? ` · 다운로드 ${service.downloads}회` : ""}
                   </div>
@@ -744,6 +738,17 @@ export default function HomePage() {
                 <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>분석 결과를 바탕으로 생성된 hwpx 파일은 본 플랫폼에 공유되며, 다른 이용자가 다운로드할 수 있음을 인지합니다.</span>
               </label>
 
+              {registering && (
+                <div style={{ marginBottom: 16, padding: "20px 16px", borderRadius: 10, background: "#f8fafc", border: "1px solid rgba(0,0,0,0.06)", textAlign: "center" }}>
+                  <div style={{ display: "inline-block", width: 32, height: 32, border: "3px solid #e2e8f0", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#334155", marginBottom: 4 }}>AI가 약관을 분석하고 있어요</div>
+                  <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
+                    {inputMode === "url" ? "URL에 접속하여 약관을 읽고 분석 중입니다..." : "약관 텍스트를 분석 중입니다..."}
+                  </div>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              )}
+
               <button onClick={handleAnalyze} disabled={registering || !(registerAgreed && registerShareAgreed)} style={{
                 width: "100%", padding: 13, borderRadius: 10, border: "none",
                 background: (registerAgreed && registerShareAgreed && !registering) ? "linear-gradient(135deg, #3b82f6, #6366f1)" : "#e2e8f0",
@@ -751,7 +756,7 @@ export default function HomePage() {
                 fontSize: 15, fontWeight: 700, cursor: (registerAgreed && registerShareAgreed && !registering) ? "pointer" : "not-allowed",
                 fontFamily: "inherit", transition: "all 0.2s",
               }}>
-                {registering ? "AI 분석 중... (최대 30초)" : "AI 분석 시작"}
+                {registering ? "분석 중..." : "AI 분석 시작"}
               </button>
             </>)}
 
@@ -824,10 +829,10 @@ export default function HomePage() {
               {/* 분석 결과 표시 */}
               {[
                 { label: "케이스", value: ({
-                  foreign_no_signup: "국외기업 · 보호자동의 불필요",
-                  foreign_with_signup: "국외기업 · 보호자동의 필요",
-                  domestic_no_signup: "국내기업 · 보호자동의 불필요",
-                  domestic_with_signup: "국내기업 · 보호자동의 필요",
+                  foreign_no_signup: "국외기업 · 계정생성 없음",
+                  foreign_with_signup: "국외기업 · 계정생성 있음",
+                  domestic_no_signup: "국내기업 · 계정생성 없음",
+                  domestic_with_signup: "국내기업 · 계정생성 있음",
                 }[analyzeResult.analysis.case_type] || analyzeResult.analysis.case_type) },
                 { label: "수집 항목", value: analyzeResult.analysis.items },
                 { label: "이용 목적", value: analyzeResult.analysis.purpose },
