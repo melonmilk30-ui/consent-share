@@ -52,6 +52,8 @@ export default function HomePage() {
   const [inputMode, setInputMode] = useState("url");
   const [termsText, setTermsText] = useState("");
   const [termsUrl, setTermsUrl] = useState("");
+  const [privacyText, setPrivacyText] = useState("");
+  const [privacyUrl, setPrivacyUrl] = useState("");
   const [registering, setRegistering] = useState(false);
   const [registerAgreed, setRegisterAgreed] = useState(false);
   const [registerShareAgreed, setRegisterShareAgreed] = useState(false);
@@ -239,7 +241,12 @@ export default function HomePage() {
   // 1단계: AI 분석 요청
   const handleAnalyze = async () => {
     if (requireLogin()) return;
-    if (!termsText && !termsUrl) { showToast("이용약관 텍스트 또는 URL을 입력해주세요!"); return; }
+    if (inputMode === "text" && !termsText && !privacyText) {
+      showToast("이용약관 또는 개인정보처리방침을 입력해주세요!"); return;
+    }
+    if (inputMode === "url" && !termsUrl && !privacyUrl) {
+      showToast("이용약관 또는 개인정보처리방침 URL을 입력해주세요!"); return;
+    }
     setRegistering(true);
     try {
       const res = await fetch("/api/analyze", {
@@ -248,6 +255,8 @@ export default function HomePage() {
         body: JSON.stringify({
           terms_text: inputMode === "text" ? termsText : null,
           terms_url: inputMode === "url" ? termsUrl : null,
+          privacy_text: inputMode === "text" ? privacyText : null,
+          privacy_url: inputMode === "url" ? privacyUrl : null,
         }),
       });
       const result = await res.json();
@@ -298,7 +307,7 @@ export default function HomePage() {
   };
 
   const resetRegisterForm = () => {
-    setTermsText(""); setTermsUrl("");
+    setTermsText(""); setTermsUrl(""); setPrivacyText(""); setPrivacyUrl("");
     setRegisterAgreed(false); setRegisterShareAgreed(false);
     setAnalyzeResult(null); setEditName(""); setEditCategory(""); setRegisterStep("q1");
   };
@@ -719,12 +728,19 @@ export default function HomePage() {
 
               {inputMode === "text" ? (
                 <div style={{ marginBottom: 20 }}>
-                  <textarea value={termsText} onChange={e => setTermsText(e.target.value)} placeholder="서비스의 이용약관이나 개인정보처리방침 전문을 붙여넣어 주세요..." style={{ width: "100%", minHeight: 160, padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 13, lineHeight: 1.7, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>이용약관</label>
+                  <textarea value={termsText} onChange={e => setTermsText(e.target.value)} placeholder="서비스의 이용약관 전문을 붙여넣어 주세요" style={{ width: "100%", minHeight: 120, padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 13, lineHeight: 1.7, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box", marginBottom: 12 }} />
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>개인정보처리방침</label>
+                  <textarea value={privacyText} onChange={e => setPrivacyText(e.target.value)} placeholder="서비스의 개인정보처리방침 전문을 붙여넣어 주세요" style={{ width: "100%", minHeight: 120, padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 13, lineHeight: 1.7, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+                  <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>둘 다 입력해야 정확한 분석이 가능합니다. 하나만 입력해도 분석은 진행됩니다.</p>
                 </div>
               ) : (
                 <div style={{ marginBottom: 20 }}>
-                  <input value={termsUrl} onChange={e => setTermsUrl(e.target.value)} placeholder="https://example.com/terms" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                  <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>이용약관 또는 개인정보처리방침 페이지의 URL을 입력해 주세요.</p>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>이용약관 URL</label>
+                  <input value={termsUrl} onChange={e => setTermsUrl(e.target.value)} placeholder="https://example.com/terms" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>개인정보처리방침 URL</label>
+                  <input value={privacyUrl} onChange={e => setPrivacyUrl(e.target.value)} placeholder="https://example.com/privacy" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                  <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>둘 다 입력해야 정확한 분석이 가능합니다. 하나만 입력해도 분석은 진행됩니다.</p>
                 </div>
               )}
 
