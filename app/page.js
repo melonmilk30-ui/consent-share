@@ -41,6 +41,8 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("전체");
   const [sortBy, setSortBy] = useState("latest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
   const [selected, setSelected] = useState(new Set());
   const [showDetail, setShowDetail] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
@@ -97,8 +99,9 @@ export default function HomePage() {
 
   // 서비스 목록 불러오기 (비로그인도 가능)
   useEffect(() => {
+    setCurrentPage(1);
     fetchServices();
-  }, [query, category, sortBy]);
+  }, [query, sortBy]);
 
   const fetchServices = async () => {
     const params = new URLSearchParams();
@@ -294,6 +297,7 @@ export default function HomePage() {
         setShowRegister(false);
         resetRegisterForm();
         fetchServices();
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         showToast(result.error || "등록에 실패했습니다.");
       }
@@ -335,7 +339,7 @@ export default function HomePage() {
       {/* Header */}
       <header style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 960, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
             <img src="https://k.kakaocdn.net/dn/JnX0S/dJMcagLLNkH/Iy54jWQUY9nGep2gsP7Fek/img_xl.jpg" alt="생글생글" style={{ width: 32, height: 32, borderRadius: 8 }} />
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2 }}>생글생글</div>
@@ -360,7 +364,7 @@ export default function HomePage() {
           한 번 만들면, 모두가 쓰는 동의서
         </h1>
         <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 16px", lineHeight: 1.6 }}>
-          전국 선생님들이 등록한 에듀테크 개인정보 동의서를 검색하고 hwpx로 바로 다운로드하세요.
+          에듀테크 개인정보 동의서를 검색하고 hwpx로 바로 다운로드하세요.
         </p>
 
         {/* 3단계 안내 */}
@@ -389,18 +393,7 @@ export default function HomePage() {
         </div>
 
         {/* Filters */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, gap: 12 }}>
-          <div className="cat-pills" style={{ display: "flex", gap: 6, overflowX: "auto", flex: 1, paddingBottom: 2 }}>
-            {CATEGORIES.map(cat => (
-              <button key={cat} onClick={() => setCategory(cat)} style={{
-                padding: "6px 14px", borderRadius: 20, border: "1px solid",
-                borderColor: category === cat ? "#3b82f6" : "rgba(0,0,0,0.08)",
-                background: category === cat ? "#3b82f6" : "#fff",
-                color: category === cat ? "#fff" : "#475569",
-                fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
-              }}>{cat}</button>
-            ))}
-          </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: 14 }}>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ padding: "6px 8px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#475569", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", outline: "none", flexShrink: 0 }}>
             <option value="latest">최신순</option>
             <option value="popular">인기순</option>
@@ -432,7 +425,7 @@ export default function HomePage() {
           {services.length}개 서비스 · 체크박스로 선택 후 합본 다운로드 가능
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {services.map((service, i) => {
+          {services.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((service, i) => {
             const isSel = selected.has(service.id);
             const expired = isExpired(service.created_at);
             return (
@@ -452,7 +445,6 @@ export default function HomePage() {
                 <div style={{ flex: 1, minWidth: 0 }} onClick={() => setShowDetail(service)}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 15, fontWeight: 650 }}>{service.name}</span>
-                    <TagBadge text={service.category} />
                     {expired && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: "#fef2f2", color: "#dc2626" }}>⏰ 6개월 경과</span>}
                   </div>
                   <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>
@@ -498,6 +490,33 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
+        {/* 페이지네이션 */}
+        {services.length > ITEMS_PER_PAGE && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, marginTop: 20, flexWrap: "wrap" }}>
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} style={{
+              padding: "6px 12px", borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)",
+              background: currentPage === 1 ? "#f1f5f9" : "#fff", color: currentPage === 1 ? "#cbd5e1" : "#475569",
+              fontSize: 13, fontWeight: 500, cursor: currentPage === 1 ? "default" : "pointer", fontFamily: "inherit",
+            }}>이전</button>
+            {Array.from({ length: Math.ceil(services.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+              <button key={page} onClick={() => setCurrentPage(page)} style={{
+                padding: "6px 10px", borderRadius: 6, border: "1px solid",
+                borderColor: currentPage === page ? "#6366f1" : "rgba(0,0,0,0.08)",
+                background: currentPage === page ? "#6366f1" : "#fff",
+                color: currentPage === page ? "#fff" : "#475569",
+                fontSize: 13, fontWeight: currentPage === page ? 700 : 500,
+                cursor: "pointer", fontFamily: "inherit", minWidth: 32,
+              }}>{page}</button>
+            ))}
+            <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(services.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(services.length / ITEMS_PER_PAGE)} style={{
+              padding: "6px 12px", borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)",
+              background: currentPage === Math.ceil(services.length / ITEMS_PER_PAGE) ? "#f1f5f9" : "#fff",
+              color: currentPage === Math.ceil(services.length / ITEMS_PER_PAGE) ? "#cbd5e1" : "#475569",
+              fontSize: 13, fontWeight: 500, cursor: currentPage === Math.ceil(services.length / ITEMS_PER_PAGE) ? "default" : "pointer", fontFamily: "inherit",
+            }}>다음</button>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -528,23 +547,13 @@ export default function HomePage() {
                     fontSize: 18, fontWeight: 700, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
                     background: "#faf5ff", marginBottom: 8,
                   }} />
-                  <select value={detailEditCategory} onChange={e => setDetailEditCategory(e.target.value)} style={{
-                    padding: "4px 10px", borderRadius: 6, border: "2px solid #6366f1",
-                    fontSize: 13, fontWeight: 600, fontFamily: "inherit", outline: "none",
-                    background: "#faf5ff", cursor: "pointer",
-                  }}>
-                    {["디자인", "협업", "학급운영", "LMS", "수업도구", "기타"].map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={handleAdminEdit} style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#6366f1", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>저장</button>
                     <button onClick={() => setEditingDetail(false)} style={{ padding: "5px 14px", borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#475569", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>취소</button>
                   </div>
                 </>) : (<>
                   <h2 style={{ fontSize: 20, fontWeight: 750, margin: 0 }}>{showDetail.name}</h2>
                   <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                    <TagBadge text={showDetail.category} />
                     {isExpired(showDetail.created_at) && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600, background: "#fef2f2", color: "#dc2626" }}>⏰ 6개월 경과</span>}
                     {isAdmin && (
                       <button onClick={() => { setEditingDetail(true); setDetailEditName(showDetail.name); setDetailEditCategory(showDetail.category); }} style={{ padding: "2px 8px", borderRadius: 4, border: "1px solid #c7d2fe", background: "#eef2ff", color: "#6366f1", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>✏️ 수정</button>
@@ -811,22 +820,6 @@ export default function HomePage() {
                 <p style={{ fontSize: 11, color: "#8b5cf6", marginTop: 4 }}>
                   ⚠️ 실제 웹사이트/앱에서 사용하는 이름으로 입력해주세요. 다른 선생님이 검색할 때 이 이름으로 찾습니다.
                 </p>
-              </div>
-
-              {/* 카테고리 수정 */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>
-                  카테고리 <span style={{ color: "#dc2626", fontSize: 11 }}>* 수정 가능</span>
-                </label>
-                <select value={editCategory} onChange={e => setEditCategory(e.target.value)} style={{
-                  width: "100%", padding: "10px 14px", borderRadius: 8, border: "2px solid #6366f1",
-                  fontSize: 14, fontWeight: 600, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
-                  background: "#faf5ff", cursor: "pointer",
-                }}>
-                  {["디자인", "협업", "학급운영", "LMS", "수업도구", "기타"].map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
               </div>
 
               {/* 분석 결과 표시 */}
