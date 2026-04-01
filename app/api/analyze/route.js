@@ -88,12 +88,9 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { terms_text, terms_url, privacy_text, privacy_url } = body;
+    const { terms_text, privacy_text } = body;
 
-    const hasText = terms_text || privacy_text;
-    const hasUrl = terms_url || privacy_url;
-
-    if (!hasText && !hasUrl) {
+    if (!terms_text && !privacy_text) {
       return NextResponse.json(
         { error: "이용약관 또는 개인정보처리방침을 입력해주세요." },
         { status: 400 }
@@ -101,26 +98,10 @@ export async function POST(request) {
     }
 
     // Claude API 호출
-    const isUrl = !hasText && hasUrl;
-    let userMessage = "";
-
-    if (isUrl) {
-      // URL 모드: 두 개 URL을 함께 전달
-      const urls = [];
-      if (terms_url) urls.push(`이용약관: ${terms_url}`);
-      if (privacy_url) urls.push(`개인정보처리방침: ${privacy_url}`);
-      userMessage = `다음 에듀테크 서비스의 URL입니다:\n${urls.join("\n")}
-
-위 URL에 접속하여 이용약관과 개인정보처리방침을 모두 읽고 분석해주세요.
-특히 개인정보처리방침에서 수집하는 개인정보 항목(이름, 학년, 반, 번호 등)을 반드시 확인해주세요.
-이용약관에는 개인정보 수집 내용이 없더라도 개인정보처리방침에 학생 정보 수집이 명시되어 있다면 동의서가 필요합니다.`;
-    } else {
-      // 텍스트 모드: 두 텍스트를 구분하여 전달
-      const parts = [];
-      if (terms_text) parts.push(`[이용약관]\n${terms_text}`);
-      if (privacy_text) parts.push(`[개인정보처리방침]\n${privacy_text}`);
-      userMessage = `다음 이용약관과 개인정보처리방침을 분석해주세요:\n\n${parts.join("\n\n---\n\n")}`;
-    }
+    const parts = [];
+    if (terms_text) parts.push(`[이용약관]\n${terms_text}`);
+    if (privacy_text) parts.push(`[개인정보처리방침]\n${privacy_text}`);
+    const userMessage = `다음 이용약관과 개인정보처리방침을 분석해주세요:\n\n${parts.join("\n\n---\n\n")}`;
 
     const claudeBody = {
       model: "claude-sonnet-4-20250514",
@@ -129,14 +110,7 @@ export async function POST(request) {
       messages: [{ role: "user", content: userMessage }],
     };
 
-    if (isUrl) {
-      claudeBody.tools = [
-        { type: "web_search_20250305", name: "web_search" },
-      ];
-    }
-
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    console.log("API Key exists:", !!apiKey, "Length:", apiKey?.length, "Starts with:", apiKey?.substring(0, 10));
 
     const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -204,7 +178,7 @@ export async function POST(request) {
     // 분석 결과만 반환 (아직 DB에 저장하지 않음!)
     return NextResponse.json({
       analysis,
-      raw_terms: [terms_text, privacy_text, terms_url, privacy_url].filter(Boolean).join("\n---\n"),
+      raw_terms: [terms_text, privacy_text].filter(Boolean).join("\n---\n"),
     });
   } catch (err) {
     console.error("Analyze error:", err);
