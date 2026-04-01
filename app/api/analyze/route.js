@@ -151,10 +151,13 @@ export async function POST(request) {
     if (!claudeRes.ok) {
       const errBody = await claudeRes.text();
       console.error("Claude API error:", claudeRes.status, errBody);
-      return NextResponse.json(
-        { error: "AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요." },
-        { status: 500 }
-      );
+      let errMsg = "AI 분석에 실패했습니다.";
+      if (claudeRes.status === 401) errMsg += " (오류: API 인증 실패)";
+      else if (claudeRes.status === 429) errMsg += " (오류: 요청 한도 초과 - 잠시 후 다시 시도해주세요)";
+      else if (claudeRes.status === 529) errMsg += " (오류: AI 서버 과부하 - 잠시 후 다시 시도해주세요)";
+      else if (claudeRes.status >= 500) errMsg += ` (오류: AI 서버 오류 ${claudeRes.status})`;
+      else errMsg += ` (오류 코드: ${claudeRes.status})`;
+      return NextResponse.json({ error: errMsg }, { status: 500 });
     }
 
     const claudeData = await claudeRes.json();
@@ -189,7 +192,7 @@ export async function POST(request) {
     } catch {
       console.error("JSON parse failed:", responseText.substring(0, 500));
       return NextResponse.json(
-        { error: "AI 응답을 처리할 수 없습니다. 다시 시도해주세요." },
+        { error: "AI 응답을 처리할 수 없습니다. (오류: 응답 형식 오류) 다시 시도해주세요." },
         { status: 500 }
       );
     }
@@ -205,6 +208,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error("Analyze error:", err);
-    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+    return NextResponse.json({ error: `서버 오류가 발생했습니다. (${err.message || "알 수 없는 오류"})` }, { status: 500 });
   }
 }
