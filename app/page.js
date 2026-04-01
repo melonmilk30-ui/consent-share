@@ -152,7 +152,7 @@ export default function HomePage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${service.name}_개인정보수집이용동의서.hwpx`;
+      a.download = `(생글생글) ${service.name}_개인정보수집이용동의서.hwpx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -184,7 +184,7 @@ export default function HomePage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `동의서합본_${selectedIds.length}건.hwpx`;
+      a.download = `(생글생글) 동의서합본_${selectedIds.length}건.hwpx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

@@ -59,8 +59,8 @@ export async function POST(request) {
     // 파일명 생성
     const names = orderedServices.map((s) => s.name).join("_");
     const filename = orderedServices.length === 1
-      ? `${names}_개인정보수집이용동의서.hwpx`
-      : `동의서합본_${orderedServices.length}건_${names.substring(0, 30)}.hwpx`;
+      ? `(생글생글) ${names}_개인정보수집이용동의서.hwpx`
+      : `(생글생글) 동의서합본_${orderedServices.length}건_${names.substring(0, 30)}.hwpx`;
     const encodedFilename = encodeURIComponent(filename);
 
     return new Response(hwpxBuffer, {

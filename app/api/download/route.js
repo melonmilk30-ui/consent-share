@@ -42,7 +42,7 @@ export async function GET(request) {
       .eq("id", id);
 
     // 파일명 생성 (한글 서비스명 + 동의서)
-    const filename = `${service.name}_개인정보수집이용동의서.hwpx`;
+    const filename = `(생글생글) ${service.name}_개인정보수집이용동의서.hwpx`;
     const encodedFilename = encodeURIComponent(filename);
 
     return new Response(hwpxBuffer, {
