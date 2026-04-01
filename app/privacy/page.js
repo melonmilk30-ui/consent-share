@@ -28,7 +28,11 @@ export default function PrivacyPage() {
 
           <div style={sectionStyle}>
             <h2 style={h2Style}>1. 수집하는 개인정보 항목</h2>
-            <p style={pStyle}>카카오 고유 ID (숫자형 식별자) 1개만 수집합니다. 닉네임, 이메일, 프로필사진 등 추가 개인정보는 일절 수집하지 않습니다.</p>
+            <p style={pStyle}>
+              <strong>필수 수집:</strong> 카카오 고유 ID (숫자형 식별자) 1개<br /><br />
+              <strong>선택 수집:</strong> 카카오 닉네임, 프로필사진, 이메일<br />
+              카카오 로그인 연동 과정에서 위 항목이 선택 수집 항목으로 설정되어 있으나, 현재 플랫폼의 어떤 기능에서도 해당 정보를 요구하거나 사용하지 않습니다. 수집되더라도 서비스 운영에 활용되지 않으며, 계정 삭제 시 함께 파기됩니다.
+            </p>
           </div>
           <div style={sectionStyle}>
             <h2 style={h2Style}>2. 수집 목적</h2>

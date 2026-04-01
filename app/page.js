@@ -57,8 +57,12 @@ export default function HomePage() {
   const [registerShareAgreed, setRegisterShareAgreed] = useState(false);
   const [analyzeResult, setAnalyzeResult] = useState(null); // AI 분석 결과
   const [editName, setEditName] = useState(""); // 수정 가능한 서비스명
+  const [editCategory, setEditCategory] = useState(""); // 수정 가능한 카테고리
   const [registerStep, setRegisterStep] = useState("q1"); // "q1" | "q2" | "input" | "confirm" | "not_needed" | "need_review"
   const [totalUsers, setTotalUsers] = useState(0); // 관리자용 가입자 수
+  const [editingDetail, setEditingDetail] = useState(false); // 상세 모달 수정 모드
+  const [detailEditName, setDetailEditName] = useState("");
+  const [detailEditCategory, setDetailEditCategory] = useState("");
   const inputRef = useRef(null);
 
   // 로그인 상태 확인 (비로그인도 메인 페이지 접근 가능)
@@ -193,6 +197,26 @@ export default function HomePage() {
     }
   };
 
+  const handleAdminEdit = async () => {
+    if (!showDetail || !detailEditName.trim()) return;
+    try {
+      const res = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: showDetail.id, name: detailEditName, category: detailEditCategory }),
+      });
+      if (res.ok) {
+        showToast("수정 완료!");
+        setEditingDetail(false);
+        setShowDetail({ ...showDetail, name: detailEditName, category: detailEditCategory });
+        fetchServices();
+      } else {
+        const err = await res.json();
+        showToast(err.error || "수정 실패");
+      }
+    } catch { showToast("수정 중 오류가 발생했습니다."); }
+  };
+
   const handleAdminDelete = async (service) => {
     if (!confirm(`${service.name}을(를) 정말 삭제할까요?`)) return;
     try {
@@ -235,6 +259,7 @@ export default function HomePage() {
           setRegisterStep("not_needed");
         } else {
           setEditName(result.analysis.name || "");
+          setEditCategory(result.analysis.category || "기타");
           setRegisterStep("confirm");
         }
       } else {
@@ -250,7 +275,7 @@ export default function HomePage() {
     setRegistering(true);
     try {
       // 사용자가 수정한 서비스명 반영
-      const finalAnalysis = { ...analyzeResult.analysis, name: editName };
+      const finalAnalysis = { ...analyzeResult.analysis, name: editName, category: editCategory };
       const res = await fetch("/api/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -275,7 +300,7 @@ export default function HomePage() {
   const resetRegisterForm = () => {
     setTermsText(""); setTermsUrl("");
     setRegisterAgreed(false); setRegisterShareAgreed(false);
-    setAnalyzeResult(null); setEditName(""); setRegisterStep("q1");
+    setAnalyzeResult(null); setEditName(""); setEditCategory(""); setRegisterStep("q1");
   };
 
   if (loading) {
@@ -482,13 +507,13 @@ export default function HomePage() {
         <div style={{ fontSize: 12, color: "#94a3b8", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
           <span>© 2026 생글생글</span>
           <span style={{ color: "#d1d5db" }}>·</span>
-          <a href="http://pf.kakao.com/_TxfbMX" target="_blank" rel="noopener noreferrer" style={{ color: "#cbd5e1", textDecoration: "underline", fontSize: 12 }}>카카오채널 문의</a>
+          <a href="http://pf.kakao.com/_TxfbMX" target="_blank" rel="noopener noreferrer" style={{ color: "#a1a8b4", textDecoration: "underline", fontSize: 12 }}>카카오채널 문의</a>
           <span style={{ color: "#d1d5db" }}>·</span>
-          <Link href="/terms" style={{ color: "#cbd5e1", textDecoration: "underline", fontSize: 12 }}>이용약관</Link>
+          <Link href="/terms" style={{ color: "#a1a8b4", textDecoration: "underline", fontSize: 12 }}>이용약관</Link>
           <span style={{ color: "#d1d5db" }}>·</span>
-          <Link href="/privacy" style={{ color: "#cbd5e1", textDecoration: "underline", fontSize: 12 }}>개인정보처리방침</Link>
+          <Link href="/privacy" style={{ color: "#a1a8b4", textDecoration: "underline", fontSize: 12 }}>개인정보처리방침</Link>
           <span style={{ color: "#d1d5db" }}>·</span>
-          <button onClick={() => setShowDeleteConfirm(true)} style={{ background: "none", border: "none", color: "#cbd5e1", fontSize: 12, cursor: "pointer", padding: 0, textDecoration: "underline" }}>계정 삭제</button>
+          <button onClick={() => setShowDeleteConfirm(true)} style={{ background: "none", border: "none", color: "#a1a8b4", fontSize: 12, cursor: "pointer", padding: 0, textDecoration: "underline" }}>계정 삭제</button>
         </div>
       </footer>
 
@@ -498,12 +523,36 @@ export default function HomePage() {
           <div onClick={e => e.stopPropagation()} className="modal-sheet" style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "24px 20px", maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 -10px 40px rgba(0,0,0,0.12)", animation: "sheetUp 0.3s ease-out" }}>
             <div style={{ width: 40, height: 4, borderRadius: 2, background: "#d1d5db", margin: "0 auto 16px" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-              <div>
-                <h2 style={{ fontSize: 20, fontWeight: 750, margin: 0 }}>{showDetail.name}</h2>
-                <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <TagBadge text={showDetail.category} />
-                  {isExpired(showDetail.created_at) && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600, background: "#fef2f2", color: "#dc2626" }}>⏰ 6개월 경과</span>}
-                </div>
+              <div style={{ flex: 1 }}>
+                {editingDetail && isAdmin ? (<>
+                  <input value={detailEditName} onChange={e => setDetailEditName(e.target.value)} style={{
+                    width: "100%", padding: "8px 12px", borderRadius: 8, border: "2px solid #6366f1",
+                    fontSize: 18, fontWeight: 700, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+                    background: "#faf5ff", marginBottom: 8,
+                  }} />
+                  <select value={detailEditCategory} onChange={e => setDetailEditCategory(e.target.value)} style={{
+                    padding: "4px 10px", borderRadius: 6, border: "2px solid #6366f1",
+                    fontSize: 13, fontWeight: 600, fontFamily: "inherit", outline: "none",
+                    background: "#faf5ff", cursor: "pointer",
+                  }}>
+                    {["디자인", "협업", "학급운영", "LMS", "수업도구", "기타"].map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                    <button onClick={handleAdminEdit} style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#6366f1", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>저장</button>
+                    <button onClick={() => setEditingDetail(false)} style={{ padding: "5px 14px", borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#475569", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>취소</button>
+                  </div>
+                </>) : (<>
+                  <h2 style={{ fontSize: 20, fontWeight: 750, margin: 0 }}>{showDetail.name}</h2>
+                  <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    <TagBadge text={showDetail.category} />
+                    {isExpired(showDetail.created_at) && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600, background: "#fef2f2", color: "#dc2626" }}>⏰ 6개월 경과</span>}
+                    {isAdmin && (
+                      <button onClick={() => { setEditingDetail(true); setDetailEditName(showDetail.name); setDetailEditCategory(showDetail.category); }} style={{ padding: "2px 8px", borderRadius: 4, border: "1px solid #c7d2fe", background: "#eef2ff", color: "#6366f1", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>✏️ 수정</button>
+                    )}
+                  </div>
+                </>)}
               </div>
               <button onClick={() => setShowDetail(null)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b", flexShrink: 0 }}>
                 <Icon name="x" />
@@ -544,9 +593,11 @@ export default function HomePage() {
 
       {/* Register Modal */}
       {showRegister && (
-        <div onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} className="modal-sheet" style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "24px 20px", maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 -10px 40px rgba(0,0,0,0.12)", animation: "sheetUp 0.3s ease-out" }}>
-            <div style={{ width: 40, height: 4, borderRadius: 2, background: "#d1d5db", margin: "0 auto 16px" }} />
+        <div onClick={() => { setShowRegister(false); resetRegisterForm(); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: ["q1", "q2", "not_needed", "need_review"].includes(registerStep) ? "center" : "flex-end", justifyContent: "center", padding: ["q1", "q2", "not_needed", "need_review"].includes(registerStep) ? 20 : 0 }}>
+          <div onClick={e => e.stopPropagation()} className="modal-sheet" style={{ background: "#fff", borderRadius: ["q1", "q2", "not_needed", "need_review"].includes(registerStep) ? 20 : "16px 16px 0 0", padding: "24px 20px", maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: ["q1", "q2", "not_needed", "need_review"].includes(registerStep) ? "0 20px 60px rgba(0,0,0,0.15)" : "0 -10px 40px rgba(0,0,0,0.12)" }}>
+            {!["q1", "q2", "not_needed", "need_review"].includes(registerStep) && (
+              <div style={{ width: 40, height: 4, borderRadius: 2, background: "#d1d5db", margin: "0 auto 16px" }} />
+            )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h2 style={{ fontSize: 20, fontWeight: 750, margin: 0 }}>
                 {(registerStep === "q1" || registerStep === "q2") && "동의서 작성 전 확인"}
@@ -754,9 +805,24 @@ export default function HomePage() {
                 </p>
               </div>
 
+              {/* 카테고리 수정 */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>
+                  카테고리 <span style={{ color: "#dc2626", fontSize: 11 }}>* 수정 가능</span>
+                </label>
+                <select value={editCategory} onChange={e => setEditCategory(e.target.value)} style={{
+                  width: "100%", padding: "10px 14px", borderRadius: 8, border: "2px solid #6366f1",
+                  fontSize: 14, fontWeight: 600, fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+                  background: "#faf5ff", cursor: "pointer",
+                }}>
+                  {["디자인", "협업", "학급운영", "LMS", "수업도구", "기타"].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* 분석 결과 표시 */}
               {[
-                { label: "카테고리", value: analyzeResult.analysis.category },
                 { label: "케이스", value: ({
                   foreign_no_signup: "국외기업 · 보호자동의 불필요",
                   foreign_with_signup: "국외기업 · 보호자동의 필요",
