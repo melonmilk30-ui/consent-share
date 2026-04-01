@@ -358,6 +358,39 @@ export default function HomePage() {
         </div>
       </header>
 
+      {/* 서비스 네비게이션 */}
+      <div style={{ background: "#f8fafc", borderBottom: "1px solid rgba(0,0,0,0.04)", overflowX: "auto" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto", padding: "6px 20px", display: "flex", gap: 12, justifyContent: "center" }}>
+          {[
+            { emoji: "🖊️", name: "생글생글", desc: "생기부 AI 작성", url: null, action: () => setShowSgsg(true), active: false },
+            { emoji: "🤝", name: "동글동글", desc: "동의서 공유", url: "https://consent.saenggle.com", active: true },
+            { emoji: "📄", name: "뚝딱공문", desc: "공문 작성", url: "https://gongmoon.saenggle.com", active: false },
+          ].map((s, i) => (
+            s.action ? (
+              <button key={i} onClick={s.action} style={{
+                display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8,
+                background: s.active ? "#eef2ff" : "transparent",
+                border: s.active ? "1px solid #c7d2fe" : "1px solid transparent",
+                cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit",
+              }}>
+                <span style={{ fontSize: 14 }}>{s.emoji}</span>
+                <span style={{ fontSize: 12, fontWeight: s.active ? 700 : 500, color: s.active ? "#4f46e5" : "#64748b" }}>{s.name}</span>
+              </button>
+            ) : (
+              <a key={i} href={s.url} style={{
+                display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8,
+                background: s.active ? "#eef2ff" : "transparent",
+                border: s.active ? "1px solid #c7d2fe" : "1px solid transparent",
+                textDecoration: "none", whiteSpace: "nowrap", transition: "all 0.15s",
+              }}>
+                <span style={{ fontSize: 14 }}>{s.emoji}</span>
+                <span style={{ fontSize: 12, fontWeight: s.active ? 700 : 500, color: s.active ? "#4f46e5" : "#64748b" }}>{s.name}</span>
+              </a>
+            )
+          ))}
+        </div>
+      </div>
+
       {/* Hero + Search */}
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 20px 0", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(12px)", transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 6px", lineHeight: 1.3, background: "linear-gradient(135deg, #1e293b, #475569)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>

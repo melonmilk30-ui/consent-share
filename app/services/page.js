@@ -7,30 +7,33 @@ export default function ServicesPage() {
 
   const services = [
     {
-      emoji: "📝",
-      name: "생기부 작성 도우미",
+      emoji: "🖊️",
+      name: "생글생글",
       desc: "행동발달특성, 창의적체험활동 등 생활기록부 문장을 AI가 함께 작성해요.",
       status: "5월 오픈 예정",
       statusColor: "#7c3aed",
       statusBg: "#f3e8ff",
+      url: "https://saenggle.com",
       active: false,
     },
     {
-      emoji: "📄",
-      name: "에듀테크 동의서",
+      emoji: "🤝",
+      name: "동글동글",
       desc: "에듀테크 서비스 약관을 붙여넣으면 개인정보 수집·이용 동의서를 자동으로 만들어줘요.",
       status: "사용 중",
       statusColor: "#059669",
       statusBg: "#d1fae5",
+      url: "https://consent.saenggle.com",
       active: true,
     },
     {
-      emoji: "📋",
-      name: "공문 본문 도우미",
+      emoji: "📄",
+      name: "뚝딱공문",
       desc: "공문 내용을 입력하면 양식에 맞는 공문 본문을 hwpx로 생성해줘요.",
       status: "준비 중",
       statusColor: "#d97706",
       statusBg: "#fef3c7",
+      url: "https://gongmoon.saenggle.com",
       active: false,
     },
   ];
@@ -87,11 +90,11 @@ export default function ServicesPage() {
                   </div>
                   <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
                   {s.active && (
-                    <button onClick={() => router.push("/")} style={{
-                      marginTop: 12, padding: "8px 20px", borderRadius: 8, border: "none",
+                    <a href={s.url} style={{
+                      display: "inline-block", marginTop: 12, padding: "8px 20px", borderRadius: 8, border: "none",
                       background: "linear-gradient(135deg, #3b82f6, #6366f1)",
-                      color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-                    }}>바로가기 →</button>
+                      color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none", fontFamily: "inherit",
+                    }}>바로가기 →</a>
                   )}
                 </div>
               </div>
@@ -107,10 +110,10 @@ export default function ServicesPage() {
       </div>
 
       <footer style={{ maxWidth: 960, margin: "0 auto", padding: "20px 20px 32px", textAlign: "center", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-        <div style={{ fontSize: 12, color: "#94a3b8", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <div style={{ fontSize: 12, color: "#a1a8b4", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <span>© 2026 생글생글</span>
           <span style={{ color: "#d1d5db" }}>·</span>
-          <a href="http://pf.kakao.com/_TxfbMX" target="_blank" rel="noopener noreferrer" style={{ color: "#cbd5e1", textDecoration: "underline", fontSize: 12 }}>카카오채널 문의</a>
+          <a href="http://pf.kakao.com/_TxfbMX" target="_blank" rel="noopener noreferrer" style={{ color: "#a1a8b4", textDecoration: "underline", fontSize: 12 }}>카카오채널 문의</a>
         </div>
       </footer>
     </div>
