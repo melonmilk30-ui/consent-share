@@ -199,7 +199,7 @@ body::before {
   </p>
   <div style="margin-bottom:32px;display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadeDown 0.8s ease 0.25s both;">
     <div style="display:inline-block;padding:10px 28px;border-radius:50px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:16px;font-weight:900;letter-spacing:0.02em;">2025. 5. 1. OPEN</div>
-    <div style="font-size:14px;color:#64748b;">현직 초등교사가 직접 개발했습니다 <span style="font-size:10px;color:#b0b0b0;font-weight:400;margin-left:4px;">겸직신고완료...(소심..)</span></div>
+    <div style="font-size:14px;color:#64748b;">현직 초등교사가 직접 개발했습니다</div>
   </div>
   <div class="hero-chips">
     <button class="hero-chip chip-main" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">기능 둘러보기</button>

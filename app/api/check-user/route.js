@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -19,7 +20,12 @@ export async function GET(request) {
 
   let total_users = 0;
   if (isAdmin) {
-    const { count } = await supabase
+    // RLS 우회하여 전체 가입자 수 조회
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    const { count } = await serviceSupabase
       .from("users")
       .select("*", { count: "exact", head: true });
     total_users = count || 0;
