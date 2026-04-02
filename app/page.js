@@ -885,7 +885,7 @@ export default function HomePage() {
             <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 4px", background: "linear-gradient(135deg, #7c3aed, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>생글생글</h2>
             <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 20px", fontWeight: 500 }}>생기부 올인원 도우미</p>
             <div style={{ padding: "16px 20px", borderRadius: 12, background: "#faf5ff", border: "1px solid #e9d5ff", marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#7c3aed", marginBottom: 4 }}>🗓️ 2025년 5월 1일 오픈!</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#7c3aed", marginBottom: 4 }}>🗓️ Coming Soon!</div>
               <div style={{ fontSize: 13, color: "#8b5cf6", lineHeight: 1.7 }}>행동발달특성, 창의적체험활동 등<br />생활기록부 작성을 생글생글이 도와드려요.</div>
             </div>
             <p style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.7, margin: "0 0 20px" }}>

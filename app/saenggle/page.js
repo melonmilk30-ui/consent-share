@@ -198,7 +198,7 @@ body::before {
     학생 한 명 한 명에 맞는 문장을 만들어 드려요.
   </p>
   <div style="margin-bottom:32px;display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadeDown 0.8s ease 0.25s both;">
-    <div style="display:inline-block;padding:10px 28px;border-radius:50px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:16px;font-weight:900;letter-spacing:0.02em;">2025. 5. 1. OPEN</div>
+    <div style="display:inline-block;padding:10px 28px;border-radius:50px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:16px;font-weight:900;letter-spacing:0.02em;">COMING SOON</div>
     <div style="font-size:14px;color:#64748b;">현직 초등교사가 직접 개발했습니다</div>
   </div>
   <div class="hero-chips">

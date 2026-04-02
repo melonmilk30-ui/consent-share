@@ -10,7 +10,7 @@ export default function ServicesPage() {
       emoji: "🖊️",
       name: "생글생글",
       desc: "행동발달특성, 창의적체험활동 등 생활기록부 문장을 AI가 함께 작성해요.",
-      status: "5월 오픈 예정",
+      status: "Coming Soon",
       statusColor: "#7c3aed",
       statusBg: "#f3e8ff",
       url: "https://saenggle.com",
