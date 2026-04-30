@@ -97,6 +97,15 @@ export async function POST(request) {
       );
     }
 
+    const BLOCKED_KEYWORDS = ["클래시파이", "classify", "classifylabs"];
+    const combinedText = `${terms_text || ""} ${privacy_text || ""}`.toLowerCase();
+    if (BLOCKED_KEYWORDS.some((kw) => combinedText.includes(kw.toLowerCase()))) {
+      return NextResponse.json(
+        { error: "해당 서비스는 운영사의 요청에 따라 동의서 등록이 제한되어 있습니다." },
+        { status: 400 }
+      );
+    }
+
     // Claude API 호출
     const parts = [];
     if (terms_text) parts.push(`[이용약관]\n${terms_text}`);
