@@ -18,6 +18,15 @@ export async function POST(request) {
       return NextResponse.json({ error: "분석 데이터가 필요합니다." }, { status: 400 });
     }
 
+    const BLOCKED_KEYWORDS = ["클래시파이", "classify", "classifylabs"];
+    const nameLower = analysis.name.toLowerCase();
+    if (BLOCKED_KEYWORDS.some((kw) => nameLower.includes(kw.toLowerCase()))) {
+      return NextResponse.json(
+        { error: "해당 서비스는 운영사의 요청에 따라 동의서 등록이 제한되어 있습니다." },
+        { status: 400 }
+      );
+    }
+
     // 관리자 여부 확인
     const { data: adminUser } = await supabase
       .from("users")
