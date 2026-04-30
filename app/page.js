@@ -7,6 +7,15 @@ import Link from "next/link";
 
 const CATEGORIES = ["전체", "디자인", "협업", "학급운영", "LMS", "수업도구", "기타"];
 
+const RESTRICTED_KEYWORDS = ["클래시파이", "classify", "classifylabs"];
+const RESTRICTED_FORM_URL = "https://blog.naver.com/classify16/223993566143";
+
+function isRestrictedService(service) {
+  if (!service?.name) return false;
+  const lower = service.name.toLowerCase();
+  return RESTRICTED_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+}
+
 const categoryColors = {
   "디자인": { bg: "#ede9fe", text: "#5b21b6" },
   "협업": { bg: "#dbeafe", text: "#1e40af" },
@@ -146,6 +155,10 @@ export default function HomePage() {
 
   const handleSingleDownload = async (service) => {
     if (requireLogin()) return;
+    if (isRestrictedService(service)) {
+      window.open(RESTRICTED_FORM_URL, "_blank", "noopener,noreferrer");
+      return;
+    }
     showToast(`${service.name} 동의서 생성 중...`);
     try {
       const res = await fetch(`/api/download?id=${service.id}`);
@@ -546,7 +559,40 @@ export default function HomePage() {
       </footer>
 
       {/* Detail Modal */}
-      {showDetail && (
+      {showDetail && isRestrictedService(showDetail) && (
+        <div onClick={() => setShowDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} className="modal-sheet" style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "24px 20px", maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 -10px 40px rgba(0,0,0,0.12)", animation: "sheetUp 0.3s ease-out" }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: "#d1d5db", margin: "0 auto 16px" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              <div style={{ flex: 1 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 750, margin: 0 }}>{showDetail.name}</h2>
+                <div style={{ marginTop: 6, fontSize: 12, color: "#94a3b8" }}>운영사 제공 양식 안내</div>
+              </div>
+              <button onClick={() => setShowDetail(null)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b", flexShrink: 0 }}>
+                <Icon name="x" />
+              </button>
+            </div>
+            <div style={{ padding: "16px 18px", borderRadius: 12, background: "#fffbeb", border: "1px solid #fde68a", marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>📢 운영사 제공 양식을 사용해주세요</div>
+              <div style={{ fontSize: 13, color: "#a16207", lineHeight: 1.7 }}>
+                해당 서비스는 운영사의 요청에 따라 동의서 등록·다운로드가 제한되어 있어요.<br />
+                운영사가 제공하는 공식 개인정보 수집·이용 동의서 양식을 아래 링크에서 받아주세요.
+              </div>
+            </div>
+            <div className="modal-actions" style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <a href={RESTRICTED_FORM_URL} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: 13, borderRadius: 10, border: "none", background: "linear-gradient(135deg, #3b82f6, #6366f1)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "inherit", textDecoration: "none" }}>
+                <Icon name="download" /> 운영사 제공 양식 받으러 가기
+              </a>
+              <button onClick={() => setShowDetail(null)} style={{ padding: "13px 18px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#475569", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {showDetail && !isRestrictedService(showDetail) && (
         <div onClick={() => setShowDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <div onClick={e => e.stopPropagation()} className="modal-sheet" style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "24px 20px", maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 -10px 40px rgba(0,0,0,0.12)", animation: "sheetUp 0.3s ease-out" }}>
             <div style={{ width: 40, height: 4, borderRadius: 2, background: "#d1d5db", margin: "0 auto 16px" }} />
