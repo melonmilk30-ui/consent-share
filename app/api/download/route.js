@@ -3,6 +3,13 @@ import { NextResponse } from "next/server";
 import { createConsentHwpx } from "@/lib/hwpx-generator";
 import { getTemplateBuffers } from "@/lib/hwpx-templates";
 
+const RESTRICTED_KEYWORDS = ["클래시파이", "classify", "classifylabs"];
+const isRestricted = (name) => {
+  if (!name) return false;
+  const lower = name.toLowerCase();
+  return RESTRICTED_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+};
+
 export async function GET(request) {
   const supabase = createClient();
 
@@ -29,6 +36,13 @@ export async function GET(request) {
 
     if (fetchError || !service) {
       return NextResponse.json({ error: "서비스를 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    if (isRestricted(service.name)) {
+      return NextResponse.json(
+        { error: "해당 서비스는 운영사의 요청에 따라 동의서 등록이 제한되어 있습니다." },
+        { status: 400 }
+      );
     }
 
     // hwpx 생성

@@ -460,10 +460,20 @@ export default function HomePage() {
                 opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(8px)",
                 transition: "all 0.2s", transitionDelay: `${i * 40}ms`,
               }}>
-                <button onClick={e => { e.stopPropagation(); toggleSelect(service.id); }} style={{
+                <button onClick={e => {
+                  e.stopPropagation();
+                  if (isRestrictedService(service)) {
+                    showToast("해당 서비스는 운영사가 제공하는 양식을 사용해주세요.");
+                    setShowDetail(service);
+                    return;
+                  }
+                  toggleSelect(service.id);
+                }} style={{
                   width: 22, height: 22, borderRadius: 6, border: "1.5px solid",
-                  borderColor: isSel ? "#6366f1" : "#cbd5e1", background: isSel ? "#6366f1" : "transparent",
-                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
+                  borderColor: isSel ? "#6366f1" : (isRestrictedService(service) ? "#e2e8f0" : "#cbd5e1"),
+                  background: isSel ? "#6366f1" : (isRestrictedService(service) ? "#f1f5f9" : "transparent"),
+                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: isRestrictedService(service) ? "not-allowed" : "pointer", flexShrink: 0,
                 }}>{isSel && <Icon name="check" />}</button>
 
                 <div style={{ flex: 1, minWidth: 0 }} onClick={() => setShowDetail(service)}>
