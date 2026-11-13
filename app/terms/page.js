@@ -36,7 +36,7 @@ export default function TermsPage() {
           </div>
           <div style={sectionStyle}>
             <h2 style={h2Style}>제3조 (가입 및 로그인)</h2>
-            <p style={pStyle}>일부 기능의 이용을 위해 카카오 계정을 통한 로그인이 필요합니다. 로그인 시 카카오 고유 ID만 수집하며, 닉네임·이메일·프로필사진 등 추가 개인정보는 수집하지 않습니다.</p>
+            <p style={pStyle}>일부 기능의 이용을 위해 카카오 계정을 통한 로그인이 필요합니다. 로그인 시 카카오 고유 ID를 수집하며, 카카오계정 이메일은 이용자가 동의한 경우에만 선택적으로 수집합니다. 닉네임·프로필사진은 수집하지 않습니다.</p>
           </div>
           <div style={sectionStyle}>
             <h2 style={h2Style}>제4조 (이용자의 의무)</h2>

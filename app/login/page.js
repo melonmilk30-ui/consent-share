@@ -86,7 +86,7 @@ export default function LoginPage() {
               <strong style={{ color: "#92400e" }}>② 봇/악성 접근 방지</strong>를 위해 로그인을 받고 있어요.
             </div>
             <div>
-              <strong style={{ color: "#92400e" }}>③ 카카오 고유 ID만</strong> 저장하며, 닉네임·이메일 등 개인정보는 일절 수집하지 않습니다.
+              <strong style={{ color: "#92400e" }}>③ 카카오 고유 ID</strong>로 이용자를 구분하며, 닉네임·프로필사진은 받지 않아요. 이메일은 선택 항목이라 동의하지 않아도 이용할 수 있어요.
             </div>
           </div>
         </div>
