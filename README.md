@@ -26,12 +26,17 @@ Vercel → 프로젝트 → Settings → Environment Variables에 추가:
 | `NEXT_PUBLIC_SUPABASE_URL` | (이미 있으면 그대로) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | (이미 있으면 그대로) |
 | `ANTHROPIC_API_KEY` | `sk-ant-xxxxx...` (Claude API 키) |
+| `KAKAO_REST_API_KEY` | 카카오 앱 REST API 키 (Supabase Kakao Provider 의 Client ID 와 같은 값) |
+| `KAKAO_CLIENT_SECRET` | 카카오 콘솔에서 Client Secret 을 '사용함'으로 둔 경우에만 |
+| `NEXT_PUBLIC_KAKAO_LOGIN_LEGACY` | 비상시에만 `1` (예전 Supabase 기본 카카오 로그인으로 되돌림) |
 
 ⚠️ ANTHROPIC_API_KEY는 앞에 NEXT_PUBLIC_ 붙이지 마세요!
 
 ### 4단계: 카카오 개발자 콘솔 설정
 1. 카카오 개발자 → 내 앱 → 카카오 로그인 → **동의항목**
-   - 닉네임, 프로필사진, 이메일 → **사용 안 함** 으로 변경
+   - 닉네임·프로필사진 → **사용 안 함**, 이메일 → 선택 동의
+   - 로그인은 카카오에 `openid account_email` 만 직접 요청(OIDC)하고 id_token 을 Supabase 에 넘깁니다
+     (`lib/kakao-oidc.js`, `app/auth/kakao/start`, `app/auth/kakao/callback`). 테스트: `npm test`
 2. **Redirect URI** 확인 (이미 있으면 그대로):
    - `https://lnkeeioibishoprwxwav.supabase.co/auth/v1/callback`
 
@@ -50,7 +55,8 @@ Vercel → 프로젝트 → Settings → Environment Variables에 추가:
    - Site URL → `https://consent.saenggle.com`
    - Redirect URLs → `https://consent.saenggle.com/**` 추가
 4. 카카오 개발자 → Redirect URI에 추가:
-   - `https://consent.saenggle.com/auth/callback`
+   - `https://consent.saenggle.com/auth/kakao/callback` (OIDC 직접 로그인)
+   - `https://consent.saenggle.com/auth/callback` (예전 방식, 비상용)
 
 ---
 

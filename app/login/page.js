@@ -2,16 +2,35 @@
 
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function LoginPage() {
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("error")) {
+      alert("로그인에 실패했습니다. 다시 시도해주세요.");
+    }
+  }, []);
+
   const handleKakaoLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) alert("로그인에 실패했습니다. 다시 시도해주세요.");
+    // 비상용: NEXT_PUBLIC_KAKAO_LOGIN_LEGACY=1 이면 예전 Supabase 기본 방식
+    // (닉네임·프로필 사진을 요청하므로 카카오 콘솔에서 '선택 동의'로 되돌려야 동작)
+    if (process.env.NEXT_PUBLIC_KAKAO_LOGIN_LEGACY === "1") {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) alert("로그인에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
+    // 카카오에 openid·이메일만 요청하는 직접 로그인(OIDC)
+    const params = new URLSearchParams(window.location.search);
+    const qs = new URLSearchParams();
+    if (params.get("relogin") === "1") qs.set("relogin", "1");
+    const next = params.get("next");
+    if (next) qs.set("next", next);
+    window.location.href = `/auth/kakao/start${qs.toString() ? `?${qs}` : ""}`;
   };
 
   return (

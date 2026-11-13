@@ -127,7 +127,8 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    // 다음 로그인 때 카카오 계정을 다시 고를 수 있게
+    router.push("/login?relogin=1");
   };
 
   const toggleSelect = (id) => {
