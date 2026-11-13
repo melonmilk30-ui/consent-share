@@ -24,7 +24,7 @@ export default function TermsPage() {
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px" }}>
         <div style={{ background: "#fff", borderRadius: 16, padding: "32px 24px", border: "1px solid rgba(0,0,0,0.06)" }}>
           <h1 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 4px" }}>이용약관</h1>
-          <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 28 }}>시행일: 2026년 4월 1일</p>
+          <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 28 }}>시행일: 2026년 11월 13일 (이전 시행일: 2026년 4월 1일)</p>
 
           <div style={sectionStyle}>
             <h2 style={h2Style}>제1조 (목적)</h2>
@@ -36,7 +36,7 @@ export default function TermsPage() {
           </div>
           <div style={sectionStyle}>
             <h2 style={h2Style}>제3조 (가입 및 로그인)</h2>
-            <p style={pStyle}>일부 기능의 이용을 위해 카카오 계정을 통한 로그인이 필요합니다. 로그인 시 카카오 고유 ID를 수집하며, 카카오계정 이메일은 이용자가 동의한 경우에만 선택적으로 수집합니다. 닉네임·프로필사진은 수집하지 않습니다.</p>
+            <p style={pStyle}>일부 기능의 이용을 위해 카카오 계정을 통한 로그인이 필요합니다. 로그인 시 카카오 회원번호를 수집하며, 카카오계정 이메일은 이용자가 동의한 경우에만 선택적으로 수집합니다. 닉네임·프로필사진은 수집하지 않습니다. 자세한 내용은 개인정보처리방침을 따릅니다.</p>
           </div>
           <div style={sectionStyle}>
             <h2 style={h2Style}>제4조 (이용자의 의무)</h2>
@@ -48,7 +48,7 @@ export default function TermsPage() {
           </div>
           <div style={sectionStyle}>
             <h2 style={h2Style}>제6조 (계정 삭제)</h2>
-            <p style={pStyle}>이용자는 언제든지 플랫폼 내 계정 삭제 기능을 통해 탈퇴할 수 있으며, 탈퇴 시 저장된 카카오 고유 ID는 즉시 삭제됩니다.</p>
+            <p style={pStyle}>이용자는 언제든지 플랫폼 내 계정 삭제 기능을 통해 탈퇴할 수 있으며, 탈퇴 시 카카오 회원번호와 이메일은 즉시 삭제됩니다. 이용자가 등록한 동의서 자료는 다른 이용자와 공유하는 자료로 남되, 등록자를 알아볼 수 있는 값은 함께 삭제됩니다.</p>
           </div>
           <div>
             <h2 style={h2Style}>제7조 (약관 변경)</h2>
