@@ -13,7 +13,7 @@ export default function ServicesPage() {
       status: "Coming Soon",
       statusColor: "#7c3aed",
       statusBg: "#f3e8ff",
-      url: "https://saenggle.com",
+      url: "https://www.saenggle.com/",
       active: false,
     },
     {

@@ -353,7 +353,7 @@ export default function HomePage() {
             {isAdmin && <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>{totalUsers}명</span>}
             <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.08)", margin: "0 4px", flexShrink: 0 }} />
             {[
-              { emoji: "🖊️", name: "생글생글", desc: "생기부 도우미", url: "/saenggle", active: false },
+              { emoji: "🖊️", name: "생글생글", desc: "생기부 도우미", url: "https://www.saenggle.com/", active: false },
               { emoji: "🤝", name: "동글동글", desc: "동의서 공유 플랫폼", url: "https://consent.saenggle.com", active: true },
               { emoji: "📄", name: "뚝딱공문", desc: "공문 본문 자동 작성", url: "https://gongmoon.saenggle.com", active: false },
             ].map((s, i) => (
@@ -962,7 +962,7 @@ export default function HomePage() {
           <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", maxWidth: 340, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>🗑️</div>
             <h3 style={{ fontSize: 18, fontWeight: 750, margin: "0 0 8px" }}>정말 계정을 삭제할까요?</h3>
-            <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, margin: "0 0 20px" }}>저장된 카카오 고유 ID가 삭제되며,<br />이 작업은 되돌릴 수 없습니다.</p>
+            <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, margin: "0 0 20px" }}>카카오 회원번호와 이메일이 삭제되며,<br />이 작업은 되돌릴 수 없습니다.</p>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#475569", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>취소</button>
               <button onClick={() => { setShowDeleteConfirm(false); handleDeleteAccount(); }} style={{ flex: 1, padding: 12, borderRadius: 10, border: "none", background: "#dc2626", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>삭제하기</button>
